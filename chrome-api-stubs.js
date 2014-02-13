@@ -78,48 +78,218 @@ if(typeof(chrome) != "undefined" && chrome && chrome.app && chrome.app.runtime) 
             },
             window: {
                 create: function(url, obj, callback) {
-                    //window.open('../contacts.html');
                     if(obj.width == undefined) {
-                        obj.width = '1100';
-                        obj.height = '800';
+                        obj.width = 1100;
+                        obj.height = 800;
                     }
+                    obj.width = parseInt(obj.width);
+                    obj.height = parseInt(obj.height);
+                    obj.frame = obj.frame !== undefined && obj.frame == "none" ? false : true;
+
+                    var gui = require('nw.gui');
+
+                    var win = gui.Window.open(url, {
+                        "frame": obj.frame,
+                        "toolbar": false,
+                        "title":"",
+                        "position":"mouse",
+                        "height": obj.height,
+                        "width": obj.width
+                    });
+                   
+
                     var appWindow = {
-                        contentWindow: window.open(url, '', 'width='+obj.width+',height='+obj.height),
+                        __proto__: {
+                            closed: true
+                        },
+                        contentWindow: win,
+
                         hide: function() {
                             console.warn("chrome.app.window.create :: appWindow.hide() :: not implemented");
-                            //this.contentWindow.close();
                         },
                         close: function() {
                             console.log("chrome.app.window.create :: appWindow.close() :: close window");
                             this.contentWindow.close();  
+                        },
+                        show: function() {
+                            console.warn("chrome.app.window.create :: appWindow.show() :: not implemented");
+                        },
+                        resizeTo: function() {
+                            console.warn("chrome.app.window.create :: appWindow.resizeTo() :: not implemented");  
                         }
                     };
 
-                    if(callback)
-                        callback(appWindow);
+                    /*
+                     * Allow child windows to reference the parent, since nw.gui can't handle this internally.
+                     *  Also make sure document property is available both off the window as well as
+                     *   the contentWindow property.
+                     */
+                    win.on('loaded', (function(_appWindow) {
+                        return function() {                            
+                            console.log("window loaded.");
+                            win.window.opener = window;
+                            _appWindow.contentWindow.closed = false;
+                            _appWindow.contentWindow.document = _appWindow.contentWindow.window.document;
+                            if(callback)
+                                callback(_appWindow);
+                        }
+                        
+                    })(appWindow));
 
+                    /*
+                     * Mark the window as closed.
+                     *
+                     */
+                    win.on('closed', (function(_appWindow) {
+                        return function() {
+                            console.log("window closed.");
+                            appWindow.contentWindow.closed = true;
+                            appWindow.__proto__.closed = true;
+                            win = null;
+                        }
+                    })(appWindow));
                 },
                 current: function() {
                     return {
-                        contentWindow: window
+                        contentWindow: window,
+                        focus: function() {
+                            console.warn("not implemented");
+                        }
                     }
                 }
             }
         },
-        contextMenus: {
-            create: function(obj) {
-                console.warn("not implemented");
-            },
-            onClicked: {
-                addListener: function(callback) {
+        contextMenus: (function() {
+
+            return {
+                menu: null,
+                menuIds: [],
+                utils: { 
+                    getIndexFromArray: function(text, arr) {
+                        if(arr === undefined || text === undefined) return -1;
+                        var index = -1;
+                        for(var i = 0; i < arr.length; i++) {
+                            if(arr[i].id == text) {
+                                index = i;
+                                break;
+                            }
+                        }
+                        return index;
+                    }
+                },
+
+                /**
+                 * type
+                 * title
+                 * context
+                 * id
+                 *
+                 */
+                create: function(obj) {
+                    var gui = require('nw.gui');
+                    
+
+                    // initialize the menus if they don't exist
+                    if(this.menu == null) {
+                        // Create an empty menu
+                        var _menu = new gui.Menu();
+                        this.menu = _menu;
+
+                        // Popup as context menu
+                        document.body.addEventListener('contextmenu', (function(_this) {
+                            return function(ev) { 
+                              ev.preventDefault();
+                              // Popup at place you click
+                              _this.menu.popup(ev.x, ev.y);
+                              return false;
+                            }
+                        })(this), false);
+                    }
+
+                    var index = this.utils.getIndexFromArray(obj.parentId, this.menuIds);
+                    if(index == -1) {
+
+                        if(obj.type == 'separator') {
+                            // add separator
+                            this.menu.append(new gui.MenuItem({ 
+                                type: 'separator',
+                            }));
+                        } else {
+
+                            // Add menu item
+                            this.menu.append(new gui.MenuItem({ 
+                                label: obj.title,
+                            }));
+                        }
+                        this.menu.items[this.menu.items.length-1].text_id = obj.id;
+
+                        this.menuIds.push({id: obj.id, sub: []});
+
+                    } else {
+
+                        // submenus
+                        if(this.menu.items[index].submenu == null) {
+                            var sub1 = new gui.Menu();
+                            sub1.append(new gui.MenuItem({label: obj.title}));
+                            sub1.items[sub1.items.length-1].text_id = obj.id;
+                            this.menuIds[index].sub.push({id: obj.id, sub:[]});
+                            
+                            this.menu.items[index].submenu = sub1;
+                        } else {
+                            
+                            var sub1 = this.menu.items[index].submenu;
+                            sub1.append(new gui.MenuItem({label: obj.title}));
+                            sub1.items[sub1.items.length-1].text_id = obj.id;
+                            this.menuIds[index].sub.push({id: obj.id, sub:[]});
+
+                        }
+                    }
+                },
+                onClicked: { 
+                    addListener: function(callback) {
+
+                        // @private
+                        function _addClickEvent(menuItem, menuId) {
+                            
+                            menuItem.click = (function(info, tab) { 
+                                return function() {
+                                    info.checked = !info.checked;
+                                    callback(info, tab);
+                                }
+                            })(/* info */
+                                {
+                                    menuItemId: menuId,
+                                    checked: false
+                                },
+                                /*tab */ 
+                                {
+                                    
+                                }
+                            );
+                        }
+
+                        var len = chrome.contextMenus.menu.items.length;
+                        for(var i = 0; i < len; i++) {
+                            var sublen = chrome.contextMenus.menuIds[i].sub.length;
+                            for(var j = 0; j < sublen; j++) {
+                                _addClickEvent(chrome.contextMenus.menu.items[i].submenu.items[j], chrome.contextMenus.menuIds[i].sub[j].id);
+                            }
+                            if(sublen == 0)
+                                _addClickEvent(chrome.contextMenus.menu.items[i], chrome.contextMenus.menuIds[i].id);
+                            
+                        }                    
+                    }
+                },
+                removeAll: function() {
                     console.warn("not implemented.");
-                    //callback(info, tab);
-                } 
-            },
-            removeAll: function() {
-                console.warn("not implemented.");
+                },
+                update: function(id, menuObj) {
+                    var index = utils.getIndexFromArray(id, this.menuIds);
+
+
+                }
             }
-        },
+        })(),
         idle: {
             onStateChanged: {
                 addListener: function() {
@@ -138,8 +308,6 @@ if(typeof(chrome) != "undefined" && chrome && chrome.app && chrome.app.runtime) 
             getBackgroundPage: function(callback) {
                 var backgroundPage = {
                     postMessage: function(message, origin) {
-                        // do stuff here
-                        //console.warn("postMessage is not implemented.");
                         window.opener.postMessage(message, origin);
                     }
                 };
@@ -170,9 +338,19 @@ if(typeof(chrome) != "undefined" && chrome && chrome.app && chrome.app.runtime) 
                     setTimeout(function() { callback(); }, 500);   
                 }
             },
-            reload: function() {
-                console.warn("not implemented.");
-            }
+            reload: (function() {
+                if(window.opener == null) {
+                    return function() { 
+                        require('nw.gui').Window.get().reload();
+                    }
+                } else {
+                    return function() {
+                        require('nw.gui').Window.get().reload = this.reload;
+                        //window.opener.require('nw.gui').Window.get().reload();
+                        window.opener.chrome.runtime.reload();
+                    }
+                }
+            })()
         },
         
         storage: {
@@ -185,7 +363,13 @@ if(typeof(chrome) != "undefined" && chrome && chrome.app && chrome.app.runtime) 
                         if(name != null && localStorage[name] == undefined) {
                             var obj = {};
                             obj[name] = JSON.parse(localStorage.storage)[name];
-                            callback(obj);
+                            
+                            setTimeout(function() {
+                                callback(obj);     
+                                
+                            },500);
+
+
                         } else {
                             if(typeof(name) == "string") {
                                 setTimeout(function() {
@@ -224,5 +408,98 @@ if(typeof(chrome) != "undefined" && chrome && chrome.app && chrome.app.runtime) 
             }
 
         }
+    };
+
+    /*
+     * This object overrides webkitNotifications.createNotification, which overrides the 
+     * Notification with a NodeWebkitNotification object. 
+     *
+     */
+    window.nodeWebkitNotifications = {
+        createNotification: function(
+                              icon,  // icon url - can be relative
+                              title,  // notification title
+                              description  // notification body text
+                          ) {
+
+            console.log("createNotification :: " + icon + title + description);
+            return (function(icon, title, description) {
+                return {
+                    onAction: {},
+                    constructor: function NodeWebkitNotification() { },
+                    show: function() {
+
+                        var utils = {
+                            fromAppRootDir: function(char) {
+                                if(typeof(process) === "undefined")  // if chromium app, just return empty string
+                                    return "";
+                                
+                                // this assumes you've set the app:// protocol in the main property in package.json
+                                  // see https://github.com/rogerwang/node-webkit/wiki/App%20protocol
+                                return (char==undefined)?'app://'+window.location.hostname:'app://'+window.location.hostname+char;
+                            }
+                        };
+
+                        // @private
+                        function showNwNotification(icon, title, description, callback) {
+                            console.log("showNwNotification :: icon = " + utils.fromAppRootDir('/..') + icon);
+                            console.log("showNwNotification :: title = " + title);
+                            console.log("showNwNotification :: description = " + description);
+                            if(window.LOCAL_NW)
+                                window.LOCAL_NW.desktopNotifications.notify(utils.fromAppRootDir('/..') + icon, title, description, callback);
+                            else {
+                                // you can import https://github.com/robrighter/nw-desktop-notifications and 
+                                  // place it in commons/nw-desktop-notifications. The unimplemented webkitNotifications 
+                                    // will wrap it by default.
+                                console.warn("showNwNotification :: webkitNotifications not implemented.")
+                            }
+                        }
+                        showNwNotification(icon, title, description, this.onAction['click']);
+                        if(!this.ondisplay) return ;
+                        this.ondisplay();
+                    },
+
+                    /*
+                     * @parameter: eventName is the name of an event, like 'click'.
+                     * @parameter: callback is the function to run when the event is triggered.
+                     *
+                     * Currently, only the click event is supported.
+                     */
+                    addEventListener: function(eventName, callback) {
+                        
+                        this.onAction[eventName] = typeof(callback) == 'function' ? callback : null;
+
+                    },
+                    cancel: (function() {
+                        if(window.opener == null) {
+                            console.debug("NodeWebkitNotification.cancel :: window.opener is null.");
+                            return window.LOCAL_NW.desktopNotifications.closeAnyOpenNotificationWindows;
+                        } else {
+                            console.debug("NodeWebkitNotification.cancel :: window.opener is NOT null.");
+                            debug_win = window.opener;
+                            window.LOCAL_NW.desktopNotifications.closeAnyOpenNotificationWindows = this.cancel;
+                            return this.cancel;
+                        }
+
+                    })()
+                }
+            })(icon, title, description);
+        }
+    };
+
+    if(window.LOCAL_NW) {
+        if(window.opener == null) // if background page, override webkitNotifications
+            window.webkitNotifications.createNotification = window.nodeWebkitNotifications.createNotification;
+        else {
+
+            // if child page, then override and delegate to background page
+            window.webkitNotifications.createNotification = (function() { 
+                return window.opener.webkitNotifications.createNotification;
+            })();
+        
+        }
+    } else {
+        console.warn("webkitNotifications not implemented");
     }
+    
 }

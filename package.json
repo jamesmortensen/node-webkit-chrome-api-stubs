@@ -1,0 +1,4 @@
+{
+  "name": "node-webkit-chrome-api-stubs-test",
+  "main": "app://chrome-api-stubs/test.html"
+}
