@@ -18,8 +18,8 @@ To demo the stubs and see the API's in action, first run this demo app using nod
 
 As of node-webkit 0.9.1, webkitNotifications are unimplemented. However, the Chrome API Stubs wraps the [nw-desktop-notifications library](https://github.com/robrighter/nw-desktop-notifications) by overriding the webkitNotifications API. 
 
-To override webkitNotifications in the demo, download the nw-desktop-notifications code and place it in /common/nw-desktop-notifications. Then uncomment the `<script type="text/javascript" src="common/nw-desktop-notifications/nw-desktop-notifications.js"></script>` line in the test.html page.
+To override webkitNotifications in the demo, download the nw-desktop-notifications code and place it in /common/nw-desktop-notifications. Then uncomment the `<script type="text/javascript" src="common/nw-desktop-notifications/nw-desktop-notifications.js"></script>` line in the [test.html](https://github.com/jamesmortensen/node-webkit-chrome-api-stubs/blob/master/test.html) page.
 
 To override the webkitNotifications in your own app, add the script tag to all your HTML windows that use notifications. Be sure to include the stubs as well. 
 
-See the test.js file for an example of how to use the notifications.
+See the [test.js](https://github.com/jamesmortensen/node-webkit-chrome-api-stubs/blob/master/test.js) file for an example of how to use the notifications.
