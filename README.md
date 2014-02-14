@@ -20,6 +20,13 @@ As of node-webkit 0.9.1, webkitNotifications are unimplemented. However, the Chr
 
 To override webkitNotifications in the demo, download the nw-desktop-notifications code and place it in /common/nw-desktop-notifications. Then uncomment the `<script type="text/javascript" src="common/nw-desktop-notifications/nw-desktop-notifications.js"></script>` line in the [test.html](https://github.com/jamesmortensen/node-webkit-chrome-api-stubs/blob/master/test.html) page.
 
+When you download the nw-desktop-notifications library, you'll need to apply the included patch, which ensures the notification window has an absolute path:
+
+```
+$ cd common/nw-desktop-notifications             # make sure you're in the nw-desktop-notifications folder
+$ patch -p0 < ../../nw-notifications.patch       # apply the patch
+```
+
 To override the webkitNotifications in your own app, add the script tag to all your HTML windows that use notifications. Be sure to include the stubs as well. 
 
 See the [test.js](https://github.com/jamesmortensen/node-webkit-chrome-api-stubs/blob/master/test.js) file for an example of how to use the notifications.
