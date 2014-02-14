@@ -442,11 +442,11 @@ if(typeof(chrome) != "undefined" && chrome && chrome.app && chrome.app.runtime) 
 
                         // @private
                         function showNwNotification(icon, title, description, callback) {
-                            console.log("showNwNotification :: icon = " + utils.fromAppRootDir('/..') + icon);
+                            console.log("showNwNotification :: icon = " + utils.fromAppRootDir('/') + icon);
                             console.log("showNwNotification :: title = " + title);
                             console.log("showNwNotification :: description = " + description);
                             if(window.LOCAL_NW)
-                                window.LOCAL_NW.desktopNotifications.notify(utils.fromAppRootDir('/..') + icon, title, description, callback);
+                                window.LOCAL_NW.desktopNotifications.notify(utils.fromAppRootDir('/') + icon, title, description, callback);
                             else {
                                 // you can import https://github.com/robrighter/nw-desktop-notifications and 
                                   // place it in commons/nw-desktop-notifications. The unimplemented webkitNotifications 

@@ -1,0 +1,21 @@
+--- nw-desktop-notifications.js	2014-02-04 14:30:30.000000000 -0800
++++ nw-desktop-notifications.js	2014-02-13 21:33:37.000000000 -0800
+@@ -13,8 +13,7 @@
+ 
+ 
+ 	function makeNewNotifyWindow(){
+-		var win = gui.Window.open(
+-			'nw-desktop-notifications.html', {
++		var win = gui.Window.open('app://'+window.location.hostname+'/common/nw-desktop-notifications/'+'nw-desktop-notifications.html', {
+ 			frame: false,
+ 			toolbar: false,
+ 			width: WINDOW_WIDTH,
+@@ -43,7 +42,7 @@
+ 		}
+ 	}
+ 
+-	function notify(icon, title, content, onClick){
++	function notify(icon, title, content, onClick){
+ 		if(!gui){
+ 			return false;
+ 		}

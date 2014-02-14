@@ -37,9 +37,9 @@ if(typeof(chrome) == "undefined") {
 
 
 	var notification = webkitNotifications.createNotification(
-		  '',  // icon url - can be relative
-		  'Title',  // notification title
-		  'Description: '  // notification body text
+		  'common/nw-desktop-notifications/desktop-notify.png',  // icon url - can be relative
+		  'Node Webkit Notification',  // notification title
+		  'This is a sample notification'  // notification body text
 	);
     notification.ondisplay = 
 	    function() { 
