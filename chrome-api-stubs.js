@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014, James Mortensen, Synclio
+Copyright (c) 2014, James Mortensen
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -12,7 +12,7 @@ are permitted provided that the following conditions are met:
   list of conditions and the following disclaimer in the documentation and/or
   other materials provided with the distribution.
 
-* Neither the name of the {organization} nor the names of its
+* Neither the name of the organization nor the names of its
   contributors may be used to endorse or promote products derived from
   this software without specific prior written permission.
 
@@ -119,6 +119,23 @@ if(typeof(chrome) != "undefined" && chrome && chrome.app && chrome.app.runtime) 
                         }
                     };
 
+
+                    /*
+                     * Merge the appWindow object with the nw.gui win object so all properties 
+                     * are exposed as when invoked using the chrome.app.window API.
+                     *
+                     */ 
+                    for (var key in appWindow) {
+                       console.debug("win['"+key+"'] = " + appWindow[key]);
+                       if(win[key] === undefined) {
+                           console.debug("window doesn't have " + key + " so add it from appWindow.");
+                           win[key] = appWindow[key];
+                        } else {
+                            console.debug("don't override " + key);
+                        }
+                    }
+
+
                     /*
                      * Allow child windows to reference the parent, since nw.gui can't handle this internally.
                      *  Also make sure document property is available both off the window as well as
@@ -128,13 +145,15 @@ if(typeof(chrome) != "undefined" && chrome && chrome.app && chrome.app.runtime) 
                         return function() {                            
                             console.log("window loaded.");
                             win.window.opener = window;
+                            _appWindow.contentWindow = _appWindow.window;
                             _appWindow.contentWindow.closed = false;
+
                             _appWindow.contentWindow.document = _appWindow.contentWindow.window.document;
                             if(callback)
                                 callback(_appWindow);
                         }
                         
-                    })(appWindow));
+                    })(win));
 
                     /*
                      * Mark the window as closed.
@@ -143,11 +162,12 @@ if(typeof(chrome) != "undefined" && chrome && chrome.app && chrome.app.runtime) 
                     win.on('closed', (function(_appWindow) {
                         return function() {
                             console.log("window closed.");
-                            appWindow.contentWindow.closed = true;
-                            appWindow.__proto__.closed = true;
+                            _appWindow.contentWindow.closed = true;
+                            _appWindow.__proto__.closed = true;
+                            _appWindow = null;
                             win = null;
                         }
-                    })(appWindow));
+                    })(win));
                 },
                 current: function() {
                     return {
@@ -308,7 +328,10 @@ if(typeof(chrome) != "undefined" && chrome && chrome.app && chrome.app.runtime) 
             getBackgroundPage: function(callback) {
                 var backgroundPage = {
                     postMessage: function(message, origin) {
-                        window.opener.postMessage(message, origin);
+                        if(window.opener != null)
+                            window.opener.postMessage(message, origin);
+                        else
+                            window.postMessage(message, origin);
                     }
                 };
                 callback(backgroundPage);

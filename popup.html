@@ -1,9 +1,18 @@
 <html>
 <head>
-    
+    <script>
+        window.addEventListener("load", function() {
+        	var a = document.querySelector("#devtools");
+            a.addEventListener("click", function() { 
+            	require('nw.gui').Window.get().showDevTools(); 
+            }, false);
+        }, false);
+    </script>
 </head>
 <body>
     <p>Popup window Works</p>
+
+    <a href="#" id="devtools">Open Dev Tools</a>
 
 </body>
 </html>
