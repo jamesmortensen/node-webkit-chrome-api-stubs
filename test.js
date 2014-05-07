@@ -54,6 +54,23 @@ if(typeof(chrome) == "undefined") {
 }
 
 
+function testStorage() {
+
+s = {"id":"123","name":"James","tea":"green"};
+chrome.storage.local.set(s);   // store everything
+chrome.storage.local.get(null, function(pp) { p=pp;});  // get everything
+
+p=null;   // clear what we pulled
+chrome.storage.local.get("id", function(pp) { p=pp;});   // get only id
+chrome.storage.local.set(p);   // store only id without overwriting... overwrites on nw...
+
+chrome.storage.local.get("id", function(pp) { p=pp;});   // id still pulls
+
+chrome.storage.local.get(null, function(pp) { p=pp;});   // get everything -- test fails on nw only shows id
+
+}
+
+
 // the chrome.app.runtime.onLoaded event isn't fully implemented.
 window.onload = function() {
 
