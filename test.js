@@ -2,15 +2,17 @@
  * Use this to test all of the API's to make sure they at least don't throw errors, even
  * if they're not implemented.
  *
+ * TODO: Use a real testing framework like Jasmine or Mocha.
  */
 
 if(typeof(chrome) == "undefined") {
 	console.error("Stubs didn't load yet.");
 } else {
+	
 	chrome.app.runtime.onLaunched.addListener(function() {
 	    console.info("onlaunched fires successfully.");
 	    
-   });
+    });
 
 
 	chrome.alarms.create("test", {});
@@ -37,9 +39,9 @@ if(typeof(chrome) == "undefined") {
 
 
 	var notification = webkitNotifications.createNotification(
-		  'common/nw-desktop-notifications/desktop-notify.png',  // icon url - can be relative
-		  'Node Webkit Notification',  // notification title
-		  'This is a sample notification'  // notification body text
+     	'common/nw-desktop-notifications/desktop-notify.png',  // icon url - can be relative
+		'Node Webkit Notification',  // notification title
+		'This is a sample notification'  // notification body text
 	);
     notification.ondisplay = 
 	    function() { 
@@ -75,31 +77,36 @@ chrome.storage.local.get(null, function(pp) { p=pp;});   // get everything -- te
 window.onload = function() {
 
 	chrome.contextMenus.create(
-		      {
-		          "type":"normal",
-		          "title": "Developer Tools",
-		          "contexts":["all"],
-		          "id":"devtools"
-		      }
-		);
+        {
+            "type":"normal",
+            "title": "Developer Tools",
+            "contexts":["all"],
+            "id":"devtools"
+        }
+	);
 
 	chrome.contextMenus.onClicked.addListener(function(info, tab) { 
-	        console.info("info = " + info);
-	        console.info("tab = " + tab); 
-	          
-	        switch(info.menuItemId) {
+        console.info("info = " + info);
+        console.info("tab = " + tab); 
+          
+        switch(info.menuItemId) {
 
-	              case 'devtools':
-	                  require('nw.gui').Window.get().showDevTools();
+            case 'devtools':
+                require('nw.gui').Window.get().showDevTools();
 
-	                  break;
+                break;
 
-	              case 'background-devtools':
-	                  window.opener.require('nw.gui').Window.get().showDevTools();                  
+            case 'background-devtools':
+                window.opener.require('nw.gui').Window.get().showDevTools();                  
+                break;
+        }
 
-	                  break;
-	        }
+    });
 
-	    });
+	chrome.idle.setDetectionInterval(10);
+	chrome.idle.onStateChanged.addListener(function(newState) {
+        console.info("main :: onStateChanged :: check autoAway Status...");
+        console.debug("main :: onStateChanged :: idle state is " + newState);
+    });
 
-}
+};

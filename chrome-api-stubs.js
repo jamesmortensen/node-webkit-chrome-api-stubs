@@ -258,13 +258,33 @@ if(typeof(chrome) != "undefined" && chrome && chrome.app && chrome.app.runtime) 
                             this.menuIds[index].sub.push({id: obj.id, sub:[]});
                             
                             this.menu.items[index].submenu = sub1;
+
+                            if(process.platform == "win32" || process.platform == "win64") {
+                                // On Windows you have to refresh the menus after modifying...
+                                var temp = this.menu.items[index];
+                                this.menu.removeAt(index);
+                                this.menu.append(temp);
+                            }
                         } else {
                             
                             var sub1 = this.menu.items[index].submenu;
-                            sub1.append(new gui.MenuItem({label: obj.title}));
+                            if(obj.type == 'separator') {
+                                // add separator
+                                sub1.append(new gui.MenuItem({ 
+                                    type: 'separator',
+                                }));
+                            } else {
+                                sub1.append(new gui.MenuItem({label: obj.title}));
+                            }
                             sub1.items[sub1.items.length-1].text_id = obj.id;
                             this.menuIds[index].sub.push({id: obj.id, sub:[]});
 
+                            // On Windows you have to refresh the menus after modifying...
+                            if(process.platform == "win32" || process.platform == "win64") {
+                                var temp = this.menu.items[index];
+                                this.menu.removeAt(index);
+                                this.menu.append(temp);
+                            }
                         }
                     }
                 },
@@ -326,7 +346,7 @@ if(typeof(chrome) != "undefined" && chrome && chrome.app && chrome.app.runtime) 
         },
         runtime: {
             getManifest: function() {
-                return require("../package.json");
+                return typeof(require) !== "undefined" ? require("../package.json") : {};
             },
             getBackgroundPage: function(callback) {
                 var backgroundPage = {
