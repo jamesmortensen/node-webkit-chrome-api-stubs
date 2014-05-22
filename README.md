@@ -30,3 +30,7 @@ $ patch -p0 < ../../nw-notifications.patch       # apply the patch
 To override the webkitNotifications in your own app, add the script tag to all your HTML windows that use notifications. Be sure to include the stubs as well. 
 
 See the [test.js](https://github.com/jamesmortensen/node-webkit-chrome-api-stubs/blob/master/test.js) file for an example of how to use the notifications.
+
+## Issues
+
+If you encounter bugs/issues, see the [issue tracker](https://github.com/jamesmortensen/node-webkit-chrome-api-stubs/issues). If you have questions, I can also be found on Twitter as [@jmort253](https://twitter.com/jmort253).
